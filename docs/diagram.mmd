@@ -1,0 +1,26 @@
+graph TD
+    %% Phase 1: Ingestion
+    subgraph Ingestion ["1. Data Ingestion (Setup)"]
+        Docs["Raw Files: PDF, DOCX, Images"] --> Parse["Text Extraction & Chunking"]
+        Parse --> Embed["Sentence-Transformer: Convert to Vectors"]
+        Embed --> Persist[("ChromaDB: Persist to Disk")]
+    end
+
+    %% Phase 2: Retrieval
+    subgraph Retrieval ["2. Retrieval (The Query)"]
+        User((User)) -->|Ask| Q["Question: What is the dog policy?"]
+        Q --> Q_Vec["Convert Question to Vector"]
+        Q_Vec --> Search["Search ChromaDB Index"]
+        Search --> Matches["Get Top 3 Text Chunks"]
+    end
+
+    %% Phase 3: Generation
+    subgraph Generation ["3. Generation (The Brain)"]
+        Matches --> Prompt["Combine: Context + Question"]
+        Prompt --> LLM{"The LLM: GPT-4 or Llama"}
+        LLM --> Final["Final Human Answer"]
+    end
+
+    %% Connections
+    Persist -.->|Data stored on drive| Search
+    Final --> User
