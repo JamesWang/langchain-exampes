@@ -1,0 +1,43 @@
+sequenceDiagram
+    participant User
+    participant PDFLoader as PyPDFLoader
+    participant TextSplitter as RecursiveCharacterTextSplitter
+    participant Embeddings as OllamaEmbeddings
+    participant VectorStore as InMemoryVectorStore
+    participant Retriever
+    participant LLM as ChatOllama
+    participant Chain as RAG Chain
+    participant Parser as StrOutputParser
+
+    User->>PDFLoader: load_pdf.load()
+    PDFLoader->>User: docs[]
+    
+    User->>TextSplitter: split_documents(docs)
+    TextSplitter->>User: all_splits[]
+    
+    User->>Embeddings: initialize(nomic-embed-text)
+    Embeddings->>User: embeddings ready
+    
+    User->>VectorStore: add_documents(all_splits)
+    VectorStore->>Embeddings: embed all documents
+    Embeddings->>VectorStore: vectors
+    VectorStore->>VectorStore: persist()
+    VectorStore->>User: ids[]
+    
+    User->>Retriever: vector_store.as_retriever(k=3)
+    Retriever->>User: retriever ready
+    
+    User->>Chain: invoke("What does the document say about prompt?")
+    Chain->>Retriever: search query
+    Retriever->>VectorStore: similarity_search(query, k=3)
+    VectorStore->>Retriever: top 3 matches
+    Retriever->>Chain: context docs
+    
+    Chain->>Chain: format_docs(context)
+    Chain->>LLM: prompt with context + input
+    LLM->>LLM: generate response
+    LLM->>Parser: raw output
+    Parser->>Chain: parsed response
+    
+    Chain->>User: result
+    User->>User: print(result)
