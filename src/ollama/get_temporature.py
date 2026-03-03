@@ -2,13 +2,9 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
+from model_init import prepare_model
 
-llm = ChatOllama(
-    model="qwen2.5:7b-instruct", # Or your preferred model
-    base_url="http://192.168.0.195:11434", # Replace with your remote IP
-    temperature=0
-)
-
+llm = prepare_model()
 
 
 # 1. Define a simple tool
