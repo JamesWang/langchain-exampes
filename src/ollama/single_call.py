@@ -6,6 +6,10 @@ from langchain_core.messages import AIMessage
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
+<<<<<<< HEAD
+=======
+from model_init import prepare_model
+>>>>>>> 2abbd9f18fd9e2b6f43074250156cc498cb32551
 
 
 # -------------------------
@@ -27,11 +31,15 @@ class AgentState(TypedDict):
 # -------------------------
 # 3️⃣ LLM (Ollama)
 # -------------------------
+<<<<<<< HEAD
 llm = ChatOllama(
     model="qwen2.5:7b-instruct", # Or your preferred model
     base_url="http://192.168.0.195:11434", # Replace with your remote IP
     temperature=0
 )
+=======
+llm = prepare_model()
+>>>>>>> 2abbd9f18fd9e2b6f43074250156cc498cb32551
 
 llm_with_tools = llm.bind_tools([calculator])
 

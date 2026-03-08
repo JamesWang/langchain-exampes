@@ -2,6 +2,7 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
+<<<<<<< HEAD
 
 llm = ChatOllama(
     model="qwen2.5:7b-instruct", # Or your preferred model
@@ -9,6 +10,11 @@ llm = ChatOllama(
     temperature=0
 )
 
+=======
+from model_init import prepare_model
+
+llm = prepare_model()
+>>>>>>> 2abbd9f18fd9e2b6f43074250156cc498cb32551
 
 
 # 1. Define a simple tool

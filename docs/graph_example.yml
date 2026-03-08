@@ -1,0 +1,12 @@
+email_workflow
+  - essential_steps
+    - START
+    - read_email
+    - classify_intent
+    - send_reply
+    - END
+  - optional_steps
+    - search_documentation
+    - bug_traccking
+    - draft_response
+    - human_review

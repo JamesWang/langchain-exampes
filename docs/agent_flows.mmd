@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant U as User
+    participant LG as LangGraph (Python App)
+    participant OL as Ollama Server
+    participant M as Model (Qwen2.5)
+    participant T as Tool (Python Function)
+
+    U->>LG: "What is 25 * 4?"
+    LG->>OL: Send messages + tool schema
+    OL->>M: Forward prompt
+    M-->>OL: tool_call(calculator, {"expression":"25*4"})
+    OL-->>LG: Return tool_call
+
+    LG->>T: Execute calculator("25*4")
+    T-->>LG: "100"
+
+    LG->>OL: Send tool result (role=tool, content="100")
+    OL->>M: Continue conversation
+    M-->>OL: Final answer text
+    OL-->>LG: Assistant response
+    LG-->>U: "The result is 100."
+
+    
