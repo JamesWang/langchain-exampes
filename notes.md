@@ -11,3 +11,148 @@
 > [!IMPORTANT]
 > ✅ **Separate interrupt calls from error-prone code**
 > ✅ **Use specific exception types in try/except blocks**
+
+###
+
+LangGraph Conditional Routing Cheat Sheet
+
+In LangGraph, graph.add_conditional_edges() is used to create dynamic routing in your state machine. It allows the graph to look at the current state (or environment) and decide which node to visit next, rather than following a fixed, linear path.
+
+📋 Syntax Breakdown
+
+python
+graph.add_conditional_edges(
+    source,
+    path,
+    path_map
+)
+Use code with caution.
+
+Parameter Type Description
+source str The name of the node from which the conditional routing starts.
+path callable The Router Function. A Python function that takes the current State as input and returns a string indicating the routing decision.
+path_map dict A mapping dictionary matching the output string of your path function to the actual next node name defined in your graph.
+
+How the Decision is Made (Step-by-Step)
+
+1. Execution: The source node finishes its execution and updates the graph's State.
+2. Evaluation: LangGraph automatically intercepts the workflow and calls your path router function, passing the updated State into it.
+3. The Output: Your router function executes its logic (Python rules or an LLM call) and returns a custom string representing the decision.
+4. The Jump: LangGraph looks up that string inside the path_map dictionary to find the corresponding target node name, and routes the workflow there.
+
+🛠️ Implementation Patterns
+
+Pattern 1: Programmatic / Deterministic Router (High Efficiency & Zero Cost)
+
+Best for clear, structured rules (e.g., status codes, counter limits, environment flags, boolean toggles).
+python
+import os
+from typing_extensions import TypedDict
+from langgraph.graph import StateGraph, START, END
+
+### Define State
+
+class GraphState(TypedDict):
+    retry_count: int
+    api_status: int
+
+### Predefined Python Router (Deterministic)
+
+def route_by_system_rules(state: GraphState) -> str:
+    if state["api_status"] == 200:
+        return "success"
+    elif state["retry_count"] >= 3:
+        return "exhausted"
+    else:
+        return "retry"
+
+### Graph Configuration
+
+workflow = StateGraph(GraphState)
+
+workflow.add_conditional_edges(
+    "api_caller_node",       # Source node
+    route_by_system_rules,   # Router function
+    {
+        "success": "processor_node",
+        "retry": "api_caller_node",  # Loop back
+        "exhausted": "alert_human_node"
+    }
+)
+Use code with caution.
+
+Pattern 2: LLM Intent Router (Handling Unpredictable User Input)
+
+Best when you cannot predict exactly how a human will phrase a request, requiring natural language understanding to sort into categories.
+python
+from pydantic import BaseModel, Field
+from typing import Literal
+
+### Define Structured Output for the LLM
+
+class RouteChoice(BaseModel):
+    intent: Literal["billing", "technical", "general"] = Field(
+        description="Categorize user intent based on their message."
+    )
+
+### Predefined LLM Router
+
+```python
+  def user_intent_router(state: GraphState) -> str:
+      # Use structured output to force the LLM to choose a valid key
+      structured_llm = model.with_structured_output(RouteChoice)
+      last_message = state["messages"][-1].content
+
+      decision = structured_llm.invoke(last_message)
+      return decision.intent
+
+workflow.add_conditional_edges(
+    "input_receiver_node",
+    user_intent_router,
+    {
+        "billing": "billing_team_node",
+        "technical": "tech_support_node",
+        "general": "chitchat_node"
+    }
+)
+```
+
+Use code with caution.
+
+Pattern 3: LLM Evaluation Router (Self-Correction & Quality Loops)
+
+Best for agentic review setups where a secondary critic LLM must evaluate the output of a prior step (e.g., grading code syntax or essay quality) before moving forward.
+python
+class QualityGrading(BaseModel):
+    is_satisfactory: bool = Field(description="True if output meets criteria, False otherwise.")
+
+### Predefined Self-Correction Router
+
+```python
+def quality_control_router(state: GraphState) -> str:
+    structured_llm = model.with_structured_output(QualityGrading)
+    grading = structured_llm.invoke(f"Critique this draft: {state['draft']}")
+
+    if grading.is_satisfactory:
+        return "pass"
+    return "fail"
+
+# Graph Configuration
+
+workflow.add_conditional_edges(
+    "writer_node",
+    quality_control_router,
+    {
+        "pass": "publisher_node",
+        "fail": "writer_node"  # Loops back to rewrite based on state feedback
+    }
+)
+```
+
+Use code with caution.
+
+⚖️ Router Selection Matrix
+
+Router Class Best Used For Execution Latency Cost Reliability
+Deterministic Code System metrics, counters, environment flags, API codes. Microseconds $0.00 100% Predictable
+LLM Structured Output Unpredictable user input, unstructured text analysis, AI output grading. Milliseconds to Seconds Variable (Token-based) High (but depends on prompt engineering)
