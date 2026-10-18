@@ -68,6 +68,7 @@ def route_by_system_rules(state: GraphState) -> str:
 
 ### Graph Configuration
 
+```python
 workflow = StateGraph(GraphState)
 
 workflow.add_conditional_edges(
@@ -79,7 +80,7 @@ workflow.add_conditional_edges(
         "exhausted": "alert_human_node"
     }
 )
-Use code with caution.
+```
 
 Pattern 2: LLM Intent Router (Handling Unpredictable User Input)
 
@@ -90,10 +91,12 @@ from typing import Literal
 
 ### Define Structured Output for the LLM
 
+```python
 class RouteChoice(BaseModel):
     intent: Literal["billing", "technical", "general"] = Field(
         description="Categorize user intent based on their message."
     )
+```
 
 ### Predefined LLM Router
 
@@ -116,8 +119,6 @@ workflow.add_conditional_edges(
     }
 )
 ```
-
-Use code with caution.
 
 Pattern 3: LLM Evaluation Router (Self-Correction & Quality Loops)
 
@@ -149,10 +150,18 @@ workflow.add_conditional_edges(
 )
 ```
 
-Use code with caution.
+## ⚖️ The Developer's Matrix
 
-⚖️ Router Selection Matrix
+When building LangGraph applications, keeping this mental framework prevents over-engineering:
 
-Router Class Best Used For Execution Latency Cost Reliability
-Deterministic Code System metrics, counters, environment flags, API codes. Microseconds $0.00 100% Predictable
-LLM Structured Output Unpredictable user input, unstructured text analysis, AI output grading. Milliseconds to Seconds Variable (Token-based) High (but depends on prompt engineering)
+| Is the data source predictable? | Router Type | Cost/Latency |
+| :--- | :--- | :--- |
+| **Yes** (Status codes, variables, counters) | **Python Native** (`if/else`) | Near-zero |
+| **No** (User utterances, AI-generated essays) | **LLM-Based** (Structured output) | Moderate |
+
+## ⚖️ Router Selection Matrix
+
+| Router Class | Best Used For | Execution Latency | Cost | Reliability |
+| :--- | :--- | :--- | :--- | :--- |
+| **Deterministic Code** | System metrics, counters, environment flags, API codes. | Microseconds | $0.00 | 100% Predictable |
+| **LLM Structured Output** | Unpredictable user input, unstructured text analysis, AI output grading. | Milliseconds to Seconds | Variable (Token-based) | High (but depends on prompt engineering) |
