@@ -14,24 +14,36 @@
 
 ###
 
-LangGraph Conditional Routing Cheat Sheet
+### 🛠️ The Rule of Thumb for LangGraph Design
+
+| Scenario | Best Router Choice | Reason |
+| :--- | :--- | :--- |
+| **Clear, structured rules** (e.g., API status codes, counter limits, environment flags, boolean toggles) | **Predefined Python Router** | Fast, cheap, and bulletproof. |
+| **Unstructured, fuzzy rules** (e.g., Categorizing a user's raw text email into "angry", "billing question", or "technical bug") | **LLM-Based Router** | Required because code cannot easily parse human intent without natural language understanding. |
+
+---
+
+### LangGraph Conditional Routing Cheat Sheet
 
 In LangGraph, graph.add_conditional_edges() is used to create dynamic routing in your state machine. It allows the graph to look at the current state (or environment) and decide which node to visit next, rather than following a fixed, linear path.
 
 📋 Syntax Breakdown
 
-python
+```python
 graph.add_conditional_edges(
     source,
     path,
     path_map
 )
-Use code with caution.
+```
 
-Parameter Type Description
-source str The name of the node from which the conditional routing starts.
-path callable The Router Function. A Python function that takes the current State as input and returns a string indicating the routing decision.
-path_map dict A mapping dictionary matching the output string of your path function to the actual next node name defined in your graph.
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| **`source`** | `str` | The name of the node *from which* the conditional routing starts. |
+| **`path`** | `callable` | **The Router Function.** A Python function that takes the current `State` as input and returns a string indicating the routing decision. |
+| **`path_map`** | `dict` | A mapping dictionary matching the output string of your `path` function to the actual next node name defined in your graph. |
+
+---
 
 How the Decision is Made (Step-by-Step)
 
@@ -159,9 +171,13 @@ When building LangGraph applications, keeping this mental framework prevents ove
 | **Yes** (Status codes, variables, counters) | **Python Native** (`if/else`) | Near-zero |
 | **No** (User utterances, AI-generated essays) | **LLM-Based** (Structured output) | Moderate |
 
+---
+
 ## ⚖️ Router Selection Matrix
 
 | Router Class | Best Used For | Execution Latency | Cost | Reliability |
 | :--- | :--- | :--- | :--- | :--- |
 | **Deterministic Code** | System metrics, counters, environment flags, API codes. | Microseconds | $0.00 | 100% Predictable |
 | **LLM Structured Output** | Unpredictable user input, unstructured text analysis, AI output grading. | Milliseconds to Seconds | Variable (Token-based) | High (but depends on prompt engineering) |
+
+---
